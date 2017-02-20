@@ -1,16 +1,14 @@
 package test.search;
 
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.Test;
+import ruxing.demo.core.ClientManager;
+import ruxing.demo.entity.po.User;
+import ruxing.demo.service.SearchService;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.util.List;
 
 /**
  * Created by ruxing on 18/02/2017.
@@ -18,17 +16,16 @@ import java.net.UnknownHostException;
 @ContextConfiguration(locations = { "classpath*:/test/spring.xml"})
 public class SearchTest extends AbstractTestNGSpringContextTests {
 
-    @Test
-    public void test() {
-        try {
-            TransportClient client = new PreBuiltTransportClient(Settings.EMPTY)
-                    .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("127.0.0.1"), 9300));
-            GetResponse response = client.prepareGet("test", "user", "10").get();
-            System.out.println(response.getId());
+    @Autowired
+    ClientManager clientManager;
 
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+    @Autowired
+    SearchService searchService;
+
+    @Test
+    public void searchDemo() {
+        List<User> user = searchService.searchDemo();
+        System.out.println(user.size());
     }
 
 }

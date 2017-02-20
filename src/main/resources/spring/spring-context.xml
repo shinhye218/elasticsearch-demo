@@ -12,7 +12,7 @@
     <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
         <property name="locations">
             <list>
-                <value>classpath*:/test/props/elasticsearch.properties</value>
+                <value>classpath*:/props/elasticsearch.properties</value>
             </list>
         </property>
         <property name="ignoreUnresolvablePlaceholders" value="true"/>
