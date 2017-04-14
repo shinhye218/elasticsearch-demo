@@ -1,19 +1,17 @@
 package ruxing.demo.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ruxing.demo.core.ClientManager;
-import ruxing.demo.core.SearchConstant;
-import ruxing.demo.entity.po.User;
+import ruxing.demo.entity.po.dto.SearchCondition;
 import ruxing.demo.service.SearchService;
 
 import java.util.ArrayList;
@@ -28,24 +26,46 @@ public class SearchServiceImpl implements SearchService {
     @Autowired
     private ClientManager clientManager;
 
-    public List<User> searchDemo() {
+    public List<Object> commonSearch(SearchCondition condition, Class clazz) {
+        if (condition == null) {
+            return null;
+        }
+        List<Object> resultList = new ArrayList<>();
 
-        List<User> userList = new ArrayList<User>();
+        QueryStringQueryBuilder queryStringQueryBuilder;
+        MatchQueryBuilder matchQueryBuilder;
+        TermQueryBuilder termQueryBuilder;
 
         Client client = clientManager.getClient();
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
-//        MatchQueryBuilder matchQueryBuilder = QueryBuilders.matchQuery("city", "Seoul");
-//        queryBuilder.must(matchQueryBuilder);
-        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("city", "seoul");
-        queryBuilder.must(termQueryBuilder);
-        SearchRequestBuilder builder = client.prepareSearch(SearchConstant.INDEX).setTypes(SearchConstant.TYPE).setQuery(queryBuilder);
+
+        if (StringUtils.isNotBlank(condition.getQueryText())) {
+            queryStringQueryBuilder = QueryBuilders.queryStringQuery(condition.getQueryText());
+            condition.getQueryTextField().forEach(queryStringQueryBuilder::field);
+            queryBuilder.must(queryStringQueryBuilder);
+        }
+
+        for (String key : condition.getMatchMap().keySet()) {
+            matchQueryBuilder = QueryBuilders.matchQuery(key, condition.getMatchMap().get(key));
+            queryBuilder.must(matchQueryBuilder);
+        }
+
+        for (String key : condition.getTermMap().keySet()) {
+            termQueryBuilder = QueryBuilders.termQuery(key, condition.getTermMap().get(key));
+            queryBuilder.must(termQueryBuilder);
+        }
+
+        SearchRequestBuilder builder = client.prepareSearch(condition.getIndex()).setTypes(condition.getType())
+                .setQuery(queryBuilder)
+                .setExplain(condition.getExplain());
+
         SearchResponse response = builder.get();
         SearchHits searchHits = response.getHits();
         for (SearchHit hit : searchHits) {
-            User user = JSON.parseObject(hit.sourceAsString(), User.class);
-            userList.add(user);
+            Object object = JSON.parseObject(hit.sourceAsString(), clazz);
+            resultList.add(object);
         }
-        return userList;
+        return resultList;
     }
 
 }

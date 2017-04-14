@@ -1,6 +1,6 @@
 package ruxing.demo.service;
 
-import ruxing.demo.entity.po.User;
+import ruxing.demo.entity.po.dto.SearchCondition;
 
 import java.util.List;
 
@@ -9,6 +9,6 @@ import java.util.List;
  */
 public interface SearchService {
 
-    List<User> searchDemo();
+    <T> List<T> commonSearch(SearchCondition searchCondition, Class clazz);
 
 }
